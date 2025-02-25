@@ -13,7 +13,7 @@ pub mod vesting {
         ctx: Context<CreateVestingAccount>,
         company_name: String,
     ) -> Result<()> {
-      *ctx.accounts.vesting_account = VesingAccount {
+      *ctx.accounts.vesting_account = VestingAccount {
         owner : ctx.accounts.signer.key(),
         mint: ctx.accounts.mint.key(),
         treasury_token_account: ctx.accounts.treasury_token_account.key(),
@@ -23,7 +23,45 @@ pub mod vesting {
       };
         Ok(())
     }
+
+    pub fn create_employee_account(ctx: Context<CreateEmployeeAccount>, start_time: i64, end_time: i64, cliff_time: i64, total_amount: u64) -> Result<()> { 
+      *ctx.accounts.employee_account = EmployeeAccount {
+        beneficiary: ctx.accounts.beneficiary.key(),
+        start_time,
+        end_time,
+        cliff_time,
+        vesting_account: ctx.accounts.vesting_account.key(),
+        total_amount,
+        total_withdrawn: 0,
+        bump: ctx.bumps.employee_account,
+      };
+      Ok(())  
+    }
 }
+
+#[derive(Accounts)]
+pub struct CreateEmployeeAccount<'info> {
+  #[account(mut)]
+  pub owner: Signer<'info>,
+  pub beneficiary: SystemAccount<'info>,
+
+  #[account(
+    has_one = owner
+  )]
+  pub vesting_account: Account<'info, VestingAccount>,
+
+  #[account(
+    init,
+    payer = owner,
+    space = 8 + EmployeeAccount::INIT_SPACE,
+    seeds = [b"employee_vesting", beneficiary.key().as_ref(), vesting_account.key().as_ref()],
+    bump
+  )]
+  pub employee_account: Account<'info, EmployeeAccount>,
+
+  pub system_program: Program<'info, System>,
+}
+
 
 #[derive(Accounts)]
 #[instruction(company_name: String)]
@@ -34,11 +72,11 @@ pub struct CreateVestingAccount<'info> {
     #[account(
       init,
       payer = signer,
-      space = 8 + VesingAccount::INIT_SPACE,
+      space = 8 + VestingAccount::INIT_SPACE,
       seeds = [company_name.as_ref()],  
       bump
     )]
-    pub vesting_account: Account<'info, VesingAccount>,
+    pub vesting_account: Account<'info, VestingAccount>,
 
     pub mint: InterfaceAccount<'info, Mint>,
 
@@ -58,7 +96,7 @@ pub struct CreateVestingAccount<'info> {
 
 #[account]
 #[derive(InitSpace)]
-pub struct VesingAccount {
+pub struct VestingAccount {
     pub owner: Pubkey,
     pub mint: Pubkey,
     pub treasury_token_account: Pubkey,
@@ -66,4 +104,17 @@ pub struct VesingAccount {
     pub company_name: String,
     pub treasury_bump: u8,
     pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct EmployeeAccount {
+  pub beneficiary: Pubkey,
+  pub start_time: i64,
+  pub end_time: i64,
+  pub cliff_time: i64,
+  pub vesting_account: Pubkey,
+  pub total_amount: u64,
+  pub total_withdrawn: u64,
+  pub bump: u8,
 }
