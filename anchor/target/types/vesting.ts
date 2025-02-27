@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/vesting.json`.
  */
 export type Vesting = {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "EXpepCR5zm7U9tvCzzA7oT9LNAwiv4dJ7zemmqTT2WUM",
   "metadata": {
     "name": "vesting",
     "version": "0.1.0",
@@ -14,16 +14,178 @@ export type Vesting = {
   },
   "instructions": [
     {
-      "name": "createEmployeeAccount",
+      "name": "claimTokens",
       "discriminator": [
-        94,
-        118,
-        255,
-        19,
-        171,
-        159,
-        58,
-        107
+        108,
+        216,
+        210,
+        231,
+        0,
+        212,
+        42,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "beneficiary",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "employeeAccount"
+          ]
+        },
+        {
+          "name": "employeeAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  109,
+                  112,
+                  108,
+                  111,
+                  121,
+                  101,
+                  101,
+                  95,
+                  118,
+                  101,
+                  115,
+                  116,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "beneficiary"
+              },
+              {
+                "kind": "account",
+                "path": "vestingAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vestingAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "arg",
+                "path": "companyName"
+              }
+            ]
+          },
+          "relations": [
+            "employeeAccount"
+          ]
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "vestingAccount"
+          ]
+        },
+        {
+          "name": "treasuryTokenAccount",
+          "writable": true,
+          "relations": [
+            "vestingAccount"
+          ]
+        },
+        {
+          "name": "employeeTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "beneficiary"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "companyName",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "createEmployeeVesting",
+      "discriminator": [
+        213,
+        201,
+        100,
+        57,
+        56,
+        236,
+        201,
+        124
       ],
       "accounts": [
         {
@@ -92,12 +254,12 @@ export type Vesting = {
           "type": "i64"
         },
         {
-          "name": "cliffTime",
+          "name": "totalAmount",
           "type": "i64"
         },
         {
-          "name": "totalAmount",
-          "type": "u64"
+          "name": "cliffTime",
+          "type": "i64"
         }
       ]
     },
@@ -168,11 +330,11 @@ export type Vesting = {
           }
         },
         {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
+          "name": "tokenProgram"
         },
         {
-          "name": "tokenProgram"
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -211,6 +373,18 @@ export type Vesting = {
       ]
     }
   ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "claimNotAvailableYet",
+      "msg": "Claiming is not available yet."
+    },
+    {
+      "code": 6001,
+      "name": "nothingToClaim",
+      "msg": "There is nothing to claim."
+    }
+  ],
   "types": [
     {
       "name": "employeeAccount",
@@ -230,20 +404,20 @@ export type Vesting = {
             "type": "i64"
           },
           {
+            "name": "totalAmount",
+            "type": "i64"
+          },
+          {
+            "name": "totalWithdrawn",
+            "type": "i64"
+          },
+          {
             "name": "cliffTime",
             "type": "i64"
           },
           {
             "name": "vestingAccount",
             "type": "pubkey"
-          },
-          {
-            "name": "totalAmount",
-            "type": "u64"
-          },
-          {
-            "name": "totalWithdrawn",
-            "type": "u64"
           },
           {
             "name": "bump",
